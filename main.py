@@ -16,10 +16,9 @@ window_spec = Window.partitionBy("user_id", "product_code").orderBy("timestamp")
 
 # Compute the time difference between consecutive events within each window and create a new column
 df = df.withColumn("prev_timestamp", F.lag("timestamp_long", 1).over(window_spec))
-df = df.withColumn("time_diff", F.when(df.prev_timestamp.isNull(), 0)
-                   .otherwise((df.timestamp_long - df.prev_timestamp) / 60))
-df = df.withColumn("new_session", df.time_diff > params.session_time_threshold)  # TODO this does not work, fix it
-df = df.withColumn("new_session", df.time_diff == 0)
+df = df.withColumn("time_diff",
+                   F.when(df.prev_timestamp.isNull(), None).otherwise(df.timestamp_long - df.prev_timestamp))
+df = df.withColumn("new_session", ((df.time_diff > params.session_time_threshold) | (df.time_diff.isNull())))
 
 df = df.withColumn("session_id", F.when(df.new_session == 0, None).otherwise(
     F.concat_ws("#", "user_id", "product_code", "timestamp")
