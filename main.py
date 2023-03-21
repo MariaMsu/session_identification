@@ -32,10 +32,9 @@ import pyspark.sql.types as T
 df = df.withColumn("session_id", F.when(df.new_session == 0, None).otherwise(
     concat_ws("#", "user_id", "product_code", "timestamp")
 ))
-# df = df.withColumn("session_id", F.when(df.new_session == 0, df.where(df.timestamp < F.col("timestamp")).first()["session_id"]))
 
 # create a window partitioned by date in ascending order
-window1 = Window.orderBy("timestamp").rowsBetween(Window.unboundedPreceding, 0)
+window1 = Window.partitionBy('user_id').orderBy("timestamp").rowsBetween(Window.unboundedPreceding, Window.currentRow)
 
 # fill the empty event strings with the value from the closest previous row containing an event name
 df = df.withColumn('session_id', when(df['session_id'].isNull(), F.last('session_id', True).over(window1)).otherwise(df['session_id']))
