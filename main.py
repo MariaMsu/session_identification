@@ -5,6 +5,10 @@ from pyspark.sql.window import Window
 
 import config
 
+"""
+compute user_session_id based on events timestamps, user_ids and product_ids
+"""
+
 
 def compute_session_id(df, session_time_threshold, debug=False):
     # Convert timestamp column to unix time
@@ -37,15 +41,18 @@ def compute_session_id(df, session_time_threshold, debug=False):
 
 if __name__ == "__main__":
     # Load the data into a Spark DataFrame, assuming the data is in a CSV file with headers:
+    print(f'    Read date from {config.input_path}')
     df_initial = spark.read.format("csv").option("header", "true").load(config.input_path)
     df_with_ids = compute_session_id(
         df=df_initial,
         session_time_threshold=config.session_time_threshold,
         debug=False)
 
+    # write new table to the output_path
     # Get boolean columns' names
     bool_columns = [col[0] for col in df_with_ids.dtypes if col[1] == 'boolean']
     # Cast boolean to Integers
     for col in bool_columns:
         dft = df_with_ids.withColumn(col, F.col(col).cast(T.IntegerType()))
+    print(f'    Write data to {config.output_path}')
     dft.toPandas().to_csv(config.output_path)
