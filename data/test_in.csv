@@ -1,6 +1,6 @@
 user_id,event_id,timestamp,product_code
 1,a,2022-03-16 14:38:42,intelij
-2,f,2022-03-17 15:18:10,pycharm
 1,b,2022-03-16 14:51:01,intelij
 1,c,2022-03-16 14:58:10,intelij
 1,a,2022-03-16 17:10:13,intelij
+2,f,2022-03-17 15:18:10,pycharm

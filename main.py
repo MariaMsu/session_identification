@@ -3,10 +3,10 @@ import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from pyspark.sql.window import Window
 
-import params
+import config
 
 # Load the data into a Spark DataFrame, assuming the data is in a CSV file with headers:
-df = spark.read.format("csv").option("header", "true").load(params.input_path)
+df = spark.read.format("csv").option("header", "true").load(config.input_path)
 
 # Convert timestamp column to unix time
 df = df.withColumn("timestamp_long", F.unix_timestamp("timestamp", "yyyy-MM-dd HH:mm:ss").cast("long"))
@@ -18,8 +18,9 @@ window_spec = Window.partitionBy("user_id", "product_code").orderBy("timestamp")
 df = df.withColumn("prev_timestamp", F.lag("timestamp_long", 1).over(window_spec))
 df = df.withColumn("time_diff",
                    F.when(df.prev_timestamp.isNull(), None).otherwise(df.timestamp_long - df.prev_timestamp))
-df = df.withColumn("new_session", ((df.time_diff > params.session_time_threshold) | (df.time_diff.isNull())))
+df = df.withColumn("new_session", ((df.time_diff > config.session_time_threshold) | (df.time_diff.isNull())))
 
+# fill session_id column for lines, representing new session
 df = df.withColumn("session_id", F.when(df.new_session == 0, None).otherwise(
     F.concat_ws("#", "user_id", "product_code", "timestamp")
 ))
@@ -40,5 +41,5 @@ bool_columns = [col[0] for col in df.dtypes if col[1] == 'boolean']
 # Cast boolean to Integers
 for col in bool_columns:
     dft = df.withColumn(col, F.col(col).cast(T.IntegerType()))
-result_df_path = params.output_path
+result_df_path = config.output_path
 dft.toPandas().to_csv(result_df_path)
