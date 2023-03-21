@@ -10,8 +10,8 @@ def compute_session_id(df, session_time_threshold, debug=False):
     # Convert timestamp column to unix time
     df = df.withColumn("timestamp_long", F.unix_timestamp("timestamp", "yyyy-MM-dd HH:mm:ss").cast("long"))
 
-    # Define a window specification based on the user_id and product_code columns, ordered by the timestamp column:
-    window_spec = Window.partitionBy("user_id", "product_code").orderBy("timestamp")
+    # Define a window specification based on the user_id and product_code columns, ordered by the timestamp_long column:
+    window_spec = Window.partitionBy("user_id", "product_code").orderBy("timestamp_long")
 
     # Compute the time difference between consecutive events within each window and create a new column
     df = df.withColumn("prev_timestamp", F.lag("timestamp_long", 1).over(window_spec))
@@ -24,13 +24,9 @@ def compute_session_id(df, session_time_threshold, debug=False):
         F.concat_ws("#", "user_id", "product_code", "timestamp")
     ))
 
-    # create a window partitioned by date in ascending order
-    window1 = Window.partitionBy('user_id').orderBy("timestamp_long") \
-        .rowsBetween(Window.unboundedPreceding, Window.currentRow)
-
     # fill the empty event strings with the value from the closest previous row containing an event name
     df = df.withColumn('session_id', F.when(df['session_id'].isNull(), F.last('session_id', True)
-                                            .over(window1)).otherwise(df['session_id']))
+                                            .over(window_spec)).otherwise(df['session_id']))
 
     if debug:
         # Drop the intermediate columns
