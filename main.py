@@ -36,7 +36,7 @@ def compute_session_id(df, session_time_threshold, debug=False):
 
     if debug:
         # Drop the intermediate columns
-        df = df.drop("prev_timestamp", "time_diff", "new_session")
+        df = df.drop("prev_timestamp", "time_diff", "new_session", "timestamp_long")
 
     return df
 
@@ -48,37 +48,24 @@ def compute_session_id2(df, debug=False):
     # Define a window specification based on the user_id and product_code columns, ordered by the timestamp_long column:
     window_spec_incr = Window.partitionBy("user_id", "product_code").orderBy("timestamp_long")
     # fill session_id column for lines, representing new session
-    df = df.withColumn("session_id_incr", F.when(df.event_id != "ide.start", None).otherwise(
+    df = df.withColumn("session_id", F.when(df.event_id != "ide.start", None).otherwise(
         F.concat_ws("#", "user_id", "product_code", "timestamp")
     ))
     # fill the empty event strings with the value from the closest previous row containing an event name
-    df = df.withColumn('session_id_incr', F.when(df['session_id_incr'].isNull(), F.last('session_id_incr', True)
-                                                 .over(window_spec_incr)).otherwise(df['session_id_incr']))
+    df = df.withColumn('session_id', F.when(df['session_id'].isNull(), F.last('session_id', True)
+                                                 .over(window_spec_incr)).otherwise(df['session_id']))
 
-    df = df.withColumn('after_close', F.when(df.event_id == "ide.close", 1))
+    w1 = Window.partitionBy("session_id").orderBy("timestamp_long")
+    df = df.withColumn('after_close', F.when(F.lag(df.event_id, 1).over(w1) == "ide.close", 1))
     # fill the empty event strings with the value from the closest previous row containing an event name
-    df = df.withColumn('after_close1', F.when(df['after_close'].isNull(), F.last('after_close', True)
-                                             .over(Window.partitionBy("session_id_incr").orderBy("timestamp_long")))) #.otherwise(df['after_close']))
+    df = df.withColumn('after_close', F.when(df['after_close'].isNull(), F.last('after_close', True)
+                                             .over(w1)).otherwise(df['after_close']))
 
-    df = df.withColumn('session_id', F.when(F.col('after_close1').isNull(), F.col("session_id_incr")))
-
-
-    # # Define a window specification based on the user_id and product_code columns, ordered by the timestamp_long column:
-    # window_spec_decr = Window.partitionBy("user_id", "product_code").orderBy(F.desc("timestamp_long"))
-    # # fill session_id column for lines, representing new session
-    # df = df.withColumn("session_id_decr", F.when(df.event_id != "ide.close", None).otherwise(
-    #     F.concat_ws("#", "user_id", "product_code", "timestamp")
-    # ))
-    # # fill the empty event strings with the value from the closest previous row containing an event name
-    # df = df.withColumn('session_id_decr', F.when(df['session_id_decr'].isNull(), F.last('session_id_decr', True)
-    #                                              .over(window_spec_decr)).otherwise(df['session_id_decr']))
-    #
-    # df = df.withColumn('session_id', F.when(F.col('session_id_incr') == F.col('session_id_decr'),
-    #                                         F.concat_ws("#", "user_id", "product_code", "timestamp")))
+    df = df.withColumn('session_id', F.when(F.col('after_close').isNull(), F.col("session_id")))
 
     if debug:
         # Drop the intermediate columns
-        df = df.drop("prev_timestamp", "time_diff", "new_session")
+        df = df.drop("after_close", "timestamp_long")
     return df
 
 

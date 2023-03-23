@@ -2,6 +2,9 @@ user_id,event_id,timestamp,product_code
 1,ide.start,2022-03-16 10:12:16,intellij
 1,s,2022-03-16 14:38:42,intellij
 1,ide.close,2022-03-16 14:51:01,intellij
+1,q1,2022-03-16 14:51:02,intellij
+1,ide.close,2022-03-16 14:51:03,intellij
+1,q,2022-03-16 14:51:04,intellij
 1,q,2022-03-16 14:51:13,intellij
 1,ide.start,2022-03-16 14:58:10,intellij
 1,ide.close,2022-03-16 17:10:13,intellij
