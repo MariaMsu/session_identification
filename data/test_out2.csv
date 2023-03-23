@@ -1,15 +1,15 @@
-user_id,event_id,timestamp,product_code,timestamp_long,session_id,after_close
-2,user.b,2022-03-17 15:20:21,webstorm,1647526821,,
-1,ide.start,2022-03-16 10:12:16,intellij,1647421936,1#intellij#2022-03-16 10:12:16,
-1,user.a,2022-03-16 14:38:42,intellij,1647437922,1#intellij#2022-03-16 10:12:16,
-1,ide.close,2022-03-16 14:51:01,intellij,1647438661,1#intellij#2022-03-16 10:12:16,
-1,user.b,2022-03-16 14:51:02,intellij,1647438662,,1.0
-1,ide.close,2022-03-16 14:51:03,intellij,1647438663,,1.0
-1,ide.dump,2022-03-16 14:51:04,intellij,1647438664,,1.0
-1,ide.dump,2022-03-16 14:51:13,intellij,1647438673,,1.0
-1,ide.start,2022-03-16 14:58:10,intellij,1647439090,1#intellij#2022-03-16 14:58:10,
-1,ide.close,2022-03-16 17:10:13,intellij,1647447013,1#intellij#2022-03-16 14:58:10,
-2,ide.start,2022-03-17 15:18:10,pycharm,1647526690,2#pycharm#2022-03-17 15:18:10,
-2,ide.close,2022-03-17 15:21:09,pycharm,1647526869,2#pycharm#2022-03-17 15:18:10,
-2,ide.start,2022-03-17 15:20:22,webstorm,1647526822,2#webstorm#2022-03-17 15:20:22,
-2,ide.download,2022-03-17 15:25:32,webstorm,1647527132,2#webstorm#2022-03-17 15:20:22,
+user_id,event_id,timestamp,product_code,session_id
+2,user.b,2022-03-17 15:20:21,webstorm,
+1,ide.start,2022-03-16 10:12:16,intellij,1#intellij#2022-03-16 10:12:16
+1,user.a,2022-03-16 14:38:42,intellij,1#intellij#2022-03-16 10:12:16
+1,ide.close,2022-03-16 14:51:01,intellij,1#intellij#2022-03-16 10:12:16
+1,user.b,2022-03-16 14:51:02,intellij,
+1,ide.close,2022-03-16 14:51:03,intellij,
+1,ide.dump,2022-03-16 14:51:04,intellij,
+1,ide.dump,2022-03-16 14:51:13,intellij,
+1,ide.start,2022-03-16 14:58:10,intellij,1#intellij#2022-03-16 14:58:10
+1,ide.close,2022-03-16 17:10:13,intellij,1#intellij#2022-03-16 14:58:10
+2,ide.start,2022-03-17 15:18:10,pycharm,2#pycharm#2022-03-17 15:18:10
+2,ide.close,2022-03-17 15:21:09,pycharm,2#pycharm#2022-03-17 15:18:10
+2,ide.start,2022-03-17 15:20:22,webstorm,2#webstorm#2022-03-17 15:20:22
+2,ide.download,2022-03-17 15:25:32,webstorm,2#webstorm#2022-03-17 15:20:22
