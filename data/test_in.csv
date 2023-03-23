@@ -1,13 +1,15 @@
 user_id,event_id,timestamp,product_code
 1,ide.start,2022-03-16 10:12:16,intellij
-1,s,2022-03-16 14:38:42,intellij
+1,user.a,2022-03-16 14:38:42,intellij
 1,ide.close,2022-03-16 14:51:01,intellij
-1,q1,2022-03-16 14:51:02,intellij
+1,user.b,2022-03-16 14:51:02,intellij
 1,ide.close,2022-03-16 14:51:03,intellij
-1,q,2022-03-16 14:51:04,intellij
-1,q,2022-03-16 14:51:13,intellij
+1,ide.dump,2022-03-16 14:51:04,intellij
+1,ide.dump,2022-03-16 14:51:13,intellij
 1,ide.start,2022-03-16 14:58:10,intellij
 1,ide.close,2022-03-16 17:10:13,intellij
 2,ide.start,2022-03-17 15:18:10,pycharm
-2,b,2022-03-17 15:20:21,webstorm
+2,user.b,2022-03-17 15:20:21,webstorm
+2,ide.start,2022-03-17 15:20:22,webstorm
 2,ide.close,2022-03-17 15:21:09,pycharm
+2,ide.download,2022-03-17 15:25:32,webstorm
