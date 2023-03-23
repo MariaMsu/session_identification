@@ -5,6 +5,9 @@ from pyspark.sql.window import Window
 
 import config
 
+START_ACTION = "ide.start"
+CLOSE_ACTION = "ide.close"
+
 """
 compute user_session_id based on events timestamps, user_ids and product_ids
 """
@@ -22,21 +25,17 @@ def compute_session_id_time_bound(df, session_time_threshold, debug=False):
     df = df.withColumn("time_diff",
                        F.when(df.prev_timestamp.isNull(), None).otherwise(df.timestamp_long - df.prev_timestamp))
 
-    # detect start of the new session
-    df = df.withColumn("new_session", ((df.time_diff > session_time_threshold) | (df.time_diff.isNull())))
+    # detect start of the new session & fill the session_id column for the lines, representing start of the session
+    df = df.withColumn("session_id", F.when(((df.time_diff > session_time_threshold) | (df.time_diff.isNull())),
+                                            F.concat_ws("#", "user_id", "product_code", "timestamp")))
 
-    # fill session_id column for lines, representing new session
-    df = df.withColumn("session_id", F.when(df.new_session == 0, None).otherwise(
-        F.concat_ws("#", "user_id", "product_code", "timestamp")
-    ))
-
-    # fill the empty event strings with the value from the closest previous row containing an event name
+    # fill the empty session_id strings with the value from the closest previous row containing a session_id
     df = df.withColumn('session_id', F.when(df['session_id'].isNull(), F.last('session_id', True)
                                             .over(w_user_product)).otherwise(df['session_id']))
 
     if debug:
         # Drop the intermediate columns
-        df = df.drop("prev_timestamp", "time_diff", "new_session", "timestamp_long")
+        df = df.drop("prev_timestamp", "time_diff", "timestamp_long")
 
     return df
 
@@ -47,20 +46,22 @@ def compute_session_id_start_close(df, debug=False):
 
     # Define a window specification based on the user_id and product_code columns, ordered by the timestamp_long column:
     w_user_product = Window.partitionBy("user_id", "product_code").orderBy("timestamp_long")
-    # fill session_id column for lines, representing new session
-    df = df.withColumn("session_id", F.when(df.event_id != "ide.start", None).otherwise(
-        F.concat_ws("#", "user_id", "product_code", "timestamp")
-    ))
-    # fill the empty event strings with the value from the closest previous row containing an event name
+
+    # fill session_id column for lines, representing start of the session
+    df = df.withColumn("session_id", F.when(df.event_id == START_ACTION,
+                                            F.concat_ws("#", "user_id", "product_code", "timestamp")))
+
+    # fill the empty session_id strings with the value from the closest previous row containing a session_id
     df = df.withColumn('session_id', F.when(df['session_id'].isNull(), F.last('session_id', True)
                                             .over(w_user_product)).otherwise(df['session_id']))
 
-    w1 = Window.partitionBy("session_id").orderBy("timestamp_long")
-    df = df.withColumn('after_close', F.when(F.lag(df.event_id, 1).over(w1) == "ide.close", 1))
-    # fill the empty event strings with the value from the closest previous row containing an event name
+    # define rows which represent the actions happened after IDE was closed
+    w_session = Window.partitionBy("session_id").orderBy("timestamp_long")
+    df = df.withColumn('after_close', F.when(F.lag(df.event_id, 1).over(w_session) == CLOSE_ACTION, 1))
     df = df.withColumn('after_close', F.when(df['after_close'].isNull(), F.last('after_close', True)
-                                             .over(w1)).otherwise(df['after_close']))
+                                             .over(w_session)).otherwise(df['after_close']))
 
+    # remove session_id from the rows representing actions after IDE was closed
     df = df.withColumn('session_id', F.when(F.col('after_close').isNull(), F.col("session_id")))
 
     if debug:
@@ -70,6 +71,9 @@ def compute_session_id_start_close(df, debug=False):
 
 
 def write_table(df, output_path):
+    """
+    write spark dataframe 'df' to 'output_path'
+    """
     # write new table to the output_path
     # Get boolean columns' names
     bool_columns = [col[0] for col in df.dtypes if col[1] == 'boolean']
