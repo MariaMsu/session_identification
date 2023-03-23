@@ -21,6 +21,8 @@ def compute_session_id(df, session_time_threshold, debug=False):
     df = df.withColumn("prev_timestamp", F.lag("timestamp_long", 1).over(window_spec))
     df = df.withColumn("time_diff",
                        F.when(df.prev_timestamp.isNull(), None).otherwise(df.timestamp_long - df.prev_timestamp))
+
+    # detect start of the new session
     df = df.withColumn("new_session", ((df.time_diff > session_time_threshold) | (df.time_diff.isNull())))
 
     # fill session_id column for lines, representing new session
@@ -39,20 +41,69 @@ def compute_session_id(df, session_time_threshold, debug=False):
     return df
 
 
+def compute_session_id2(df, debug=False):
+    # Convert timestamp column to unix time
+    df = df.withColumn("timestamp_long", F.unix_timestamp("timestamp", "yyyy-MM-dd HH:mm:ss").cast("long"))
+
+    # Define a window specification based on the user_id and product_code columns, ordered by the timestamp_long column:
+    window_spec_incr = Window.partitionBy("user_id", "product_code").orderBy("timestamp_long")
+    # fill session_id column for lines, representing new session
+    df = df.withColumn("session_id_incr", F.when(df.event_id != "ide.start", None).otherwise(
+        F.concat_ws("#", "user_id", "product_code", "timestamp")
+    ))
+    # fill the empty event strings with the value from the closest previous row containing an event name
+    df = df.withColumn('session_id_incr', F.when(df['session_id_incr'].isNull(), F.last('session_id_incr', True)
+                                                 .over(window_spec_incr)).otherwise(df['session_id_incr']))
+
+    df = df.withColumn('after_close', F.when(df.event_id == "ide.close", 1))
+    # fill the empty event strings with the value from the closest previous row containing an event name
+    df = df.withColumn('after_close1', F.when(df['after_close'].isNull(), F.last('after_close', True)
+                                             .over(Window.partitionBy("session_id_incr").orderBy("timestamp_long")))) #.otherwise(df['after_close']))
+
+    df = df.withColumn('session_id', F.when(F.col('after_close1').isNull(), F.col("session_id_incr")))
+
+
+    # # Define a window specification based on the user_id and product_code columns, ordered by the timestamp_long column:
+    # window_spec_decr = Window.partitionBy("user_id", "product_code").orderBy(F.desc("timestamp_long"))
+    # # fill session_id column for lines, representing new session
+    # df = df.withColumn("session_id_decr", F.when(df.event_id != "ide.close", None).otherwise(
+    #     F.concat_ws("#", "user_id", "product_code", "timestamp")
+    # ))
+    # # fill the empty event strings with the value from the closest previous row containing an event name
+    # df = df.withColumn('session_id_decr', F.when(df['session_id_decr'].isNull(), F.last('session_id_decr', True)
+    #                                              .over(window_spec_decr)).otherwise(df['session_id_decr']))
+    #
+    # df = df.withColumn('session_id', F.when(F.col('session_id_incr') == F.col('session_id_decr'),
+    #                                         F.concat_ws("#", "user_id", "product_code", "timestamp")))
+
+    if debug:
+        # Drop the intermediate columns
+        df = df.drop("prev_timestamp", "time_diff", "new_session")
+    return df
+
+
+def write_table(df, output_path):
+    # write new table to the output_path
+    # Get boolean columns' names
+    bool_columns = [col[0] for col in df.dtypes if col[1] == 'boolean']
+    # Cast boolean to Integers
+    for col in bool_columns:
+        df = df.withColumn(col, F.col(col).cast(T.IntegerType()))
+    print(f'    Write data to {output_path}')
+    df.toPandas().to_csv(output_path, index=False)
+
+
 if __name__ == "__main__":
     # Load the data into a Spark DataFrame, assuming the data is in a CSV file with headers:
     print(f'    Read date from {config.input_path}')
     df_initial = spark.read.format("csv").option("header", "true").load(config.input_path)
-    df_with_ids = compute_session_id(
+    df_with_ids1 = compute_session_id(
         df=df_initial,
         session_time_threshold=config.session_time_threshold,
         debug=False)
+    write_table(df_with_ids1, output_path=config.output_path1)
 
-    # write new table to the output_path
-    # Get boolean columns' names
-    bool_columns = [col[0] for col in df_with_ids.dtypes if col[1] == 'boolean']
-    # Cast boolean to Integers
-    for col in bool_columns:
-        dft = df_with_ids.withColumn(col, F.col(col).cast(T.IntegerType()))
-    print(f'    Write data to {config.output_path}')
-    dft.toPandas().to_csv(config.output_path)
+    df_with_ids2 = compute_session_id2(
+        df=df_initial,
+        debug=False)
+    write_table(df_with_ids2, output_path=config.output_path2)

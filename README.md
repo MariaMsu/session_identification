@@ -22,3 +22,11 @@ pip3 install -r requirements.txt
 
 python3 main.py  # run the spark function itself
 ```
+
+Policy 1:
+A user session is a set of actions performed by a user or IDE
+with a short time interval between these actions.
+
+Policy 2:
+A user session is a set of all events for a distinct user happened 
+between the events 'ide.start' and 'ide.close'.
