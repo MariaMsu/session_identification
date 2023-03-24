@@ -35,7 +35,7 @@ The handler function takes as input a table with the following columns:
 `user_id` – a user’s anonymized identifier;  
 `event_id` – identifier of an event that happened inside an IDE.  
 Each event corresponds to action either of a user or an IDE itself. 
-For the sake of simplicity we assume that an event is a user action if event_id in (‘a’, ‘b’, ‘c’);
+For the sake of simplicity we assume that an event is a user action if event_id in (‘a’, ‘b’, ‘c’);  
 `timestamp` in "yyyy-MM-dd HH:mm:ss" format;  
 `product_code` – shortened name of an IDE;
 
