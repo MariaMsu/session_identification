@@ -94,6 +94,7 @@ if __name__ == "__main__":
     # Load the data into a Spark DataFrame, assuming the data is in a CSV file with headers:
     print(f'    Read date from {input_path}')
     df_initial = spark.read.format("csv").option("header", "true").load(input_path)
+
     df_with_ids1 = compute_session_id_time_bound(
         df=df_initial,
         session_time_threshold=session_time_threshold,

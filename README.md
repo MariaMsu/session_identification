@@ -27,22 +27,22 @@ python3 compute_session_id.py
 
 Compute session id for your owen data
 ```shell
-python2 main \
-  -i <> \
-  -o <> \
-  -p <> \
-  -t <>
+python3 main.py \
+  -i <input file path> \
+  -o <output file path> \
+  -p <user session definition policy: "tb" (time bounded) or "sc" (start & close)> \
+  -t <time threshold for the tb policy in seconds>
 ```
 
 ### User session definition
 
 **Policy 1: time bounded actions (tb).**  
 A user session is a set of actions performed by a user or an IDE
-with a short time interval between these actions.
+with a short time interval between these actions.  
 In this case all the rows become a user session id.
 
 **Policy 2: actions between start and close (sc).**  
 A user session is a set of all events for a distinct user happened 
 between the events 'ide.start' and 'ide.close'. 
-If an ide was opened but was not yet closed, this set of action is also considered as a session.
+If an ide was opened but was not yet closed, this set of action is also considered as a session.  
 In this case some rows dos not belong to any user session.
