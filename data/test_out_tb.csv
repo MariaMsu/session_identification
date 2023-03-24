@@ -13,3 +13,4 @@ user_id,event_id,timestamp,product_code,session_id
 2,user.b,2022-03-17 15:20:21,webstorm,2#webstorm#2022-03-17 15:20:21
 2,ide.start,2022-03-17 15:20:22,webstorm,2#webstorm#2022-03-17 15:20:21
 2,ide.download,2022-03-17 15:25:32,webstorm,2#webstorm#2022-03-17 15:20:21
+3,ide.dump,2022-03-16 14:52:04,intellij,3#intellij#2022-03-16 14:52:04

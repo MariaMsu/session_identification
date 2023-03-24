@@ -6,6 +6,7 @@ user_id,event_id,timestamp,product_code
 1,ide.close,2022-03-16 14:51:03,intellij
 1,ide.dump,2022-03-16 14:51:04,intellij
 1,ide.dump,2022-03-16 14:51:13,intellij
+3,ide.dump,2022-03-16 14:52:04,intellij
 1,ide.start,2022-03-16 14:58:10,intellij
 1,ide.close,2022-03-16 17:10:13,intellij
 2,ide.start,2022-03-17 15:18:10,pycharm
