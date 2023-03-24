@@ -47,10 +47,10 @@ def compute_session_id_start_close(df, debug=False):
     """
     Compute user_session_id based on event_ids, timestamps, user_ids and product_ids.
 
-    This function considers a user session is a set of all events for a distinct user happened
+    This function considers a user session is a set of all events for a distinct user that happened
     between the events 'START_ACTION' and 'CLOSE_ACTION'.
-    If an ide was opened but was not yet closed, this set of action is also considered as a session.
-    With this policy, some rows does not belong to any user session.
+    If an ide was opened but was not yet closed, this set of actions is also considered as a session.
+    With this policy, some rows do not belong to any user session.
     """
 
     # Convert timestamp column to unix time
