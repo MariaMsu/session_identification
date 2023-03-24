@@ -3,18 +3,22 @@ import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from pyspark.sql.window import Window
 
-
 START_ACTION = "ide.start"
 CLOSE_ACTION = "ide.close"
-
-"""
-compute user_session_id based on events timestamps, user_ids and product_ids
-"""
+TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss"
 
 
 def compute_session_id_time_bound(df, session_time_threshold, debug=False):
+    """
+    Compute user_session_id based on timestamps, user_ids and product_ids.
+
+    This function considers a user session is a set of actions performed by a user or an IDE
+    with a short time interval 'session_time_threshold' between these actions.
+    With this policy, all the rows get a user session id.
+    """
+
     # Convert timestamp column to unix time
-    df = df.withColumn("timestamp_long", F.unix_timestamp("timestamp", "yyyy-MM-dd HH:mm:ss").cast("long"))
+    df = df.withColumn("timestamp_long", F.unix_timestamp("timestamp", TIMESTAMP_FORMAT).cast("long"))
 
     # Define a window specification based on the user_id and product_code columns, ordered by the timestamp_long column:
     w_user_product = Window.partitionBy("user_id", "product_code").orderBy("timestamp_long")
@@ -40,8 +44,17 @@ def compute_session_id_time_bound(df, session_time_threshold, debug=False):
 
 
 def compute_session_id_start_close(df, debug=False):
+    """
+    Compute user_session_id based on event_ids, timestamps, user_ids and product_ids.
+
+    This function considers a user session is a set of all events for a distinct user happened
+    between the events 'START_ACTION' and 'CLOSE_ACTION'.
+    If an ide was opened but was not yet closed, this set of action is also considered as a session.
+    With this policy, some rows does not belong to any user session.
+    """
+
     # Convert timestamp column to unix time
-    df = df.withColumn("timestamp_long", F.unix_timestamp("timestamp", "yyyy-MM-dd HH:mm:ss").cast("long"))
+    df = df.withColumn("timestamp_long", F.unix_timestamp("timestamp", TIMESTAMP_FORMAT).cast("long"))
 
     # Define a window specification based on the user_id and product_code columns, ordered by the timestamp_long column:
     w_user_product = Window.partitionBy("user_id", "product_code").orderBy("timestamp_long")
@@ -86,8 +99,8 @@ def write_table(df, output_path):
 if __name__ == "__main__":
     # default paths
     input_path = "./data/test_in.csv"
-    output_path1 = "./data/test_out1.csv"
-    output_path2 = "./data/test_out2.csv"
+    output_path1 = "./data/test_out_tb.csv"
+    output_path2 = "./data/test_out_sc.csv"
     # default time threshold
     session_time_threshold = 30 * 60  # in seconds
 
